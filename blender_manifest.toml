@@ -1,27 +1,26 @@
 schema_version = "1.0.0"
 
-# Example of manifest file for a Blender extension
-# Change the values according to your extension
-# id must be the same as the directory name, and must be unique
-id = "MMD_Armature_Optimization"
-version = "0.0.1"
-name = "Basic Add-on Sample"
-tagline = "This is another extension"
-maintainer = "Developer name <email@address.com>"
-# Supported types: "add-on", "theme"
+# Blender 扩展的清单文件示例
+# 根据你的扩展来改变数值
+# id 必须与目录名称相同，且必须是唯一的
+id = "MikuMikuRigA"
+version = "1.0.0"
+name = "MMRA"
+tagline = "基于MikuMikuRig的分支。"
+maintainer = "孤不是古竹静"
+# 支持类型: "add-on", "theme"
 type = "add-on"
 
-# Optional link to documentation, support, source files, etc
-# website = "https://extensions.blender.org/add-ons/my-example-package/"
+# 可选链接至文档、支持、源文件等
+website = "https://github.com/GuZhuJing/MikuMikuRig_A/"
 
-# Optional list defined by Blender and server, see:
+# 由Blender和服务器定义的可选列表，参见：
 # https://docs.blender.org/manual/en/dev/advanced/extensions/tags.html
-tags = ["Animation", "Sequencer"]
-
+tags = ["Animation", "Sequencer","MMD"]
 blender_version_min = "4.2.0"
-# # Optional: Blender version that the extension does not support, earlier versions are supported.
-# # This can be omitted and defined later on the extensions platform if an issue is found.
-# blender_version_max = "5.1.0"
+# 可选：扩展不支持的 Blender 版本，支持早期版本。
+ # 如果发现问题，可以省略并以后在扩展平台上定义。
+ blender_version_max = "6.0.0"
 
 # License conforming to https://spdx.org/licenses/ (use "SPDX: prefix)
 # https://docs.blender.org/manual/en/dev/advanced/extensions/licenses.html

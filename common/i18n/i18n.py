@@ -3,9 +3,9 @@ import bpy
 # Get the language code when addon start up
 __language_code__ = bpy.context.preferences.view.language
 
-from .dictionary import common_dictionary
+from .dictionary import dictionary
 
-__dictionary__ = common_dictionary
+__dictionary__ = dictionary
 
 
 # Dictionary for translation: https://docs.blender.org/api/current/bpy.app.translations.html
