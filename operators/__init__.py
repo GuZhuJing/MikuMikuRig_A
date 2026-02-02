@@ -29,10 +29,3 @@ def modeInit(modeName, isDeselect=True, deselectMode="object"):
             bpy.ops.armature.select_all(action='DESELECT')
         else:
             print(f'[{FILE_NAME}/{DEF_NAME}] deselectedMode={deselectMode}不存在！')
-
-# 函数验证字符合法性
-def checkChars(char):
-    for char in char:
-        if ord(char) < 32 or ord(char) > 126:
-            return False
-    return True
