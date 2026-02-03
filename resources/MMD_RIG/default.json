@@ -108,13 +108,14 @@
   },
   "添加约束": {
     "身体部分": "#",
-    "下半身": "ORG-spine.001",
-    "上半身": "ORG-spine.002",
+    "下半身": "ORG-spine",
+    "上半身": "ORG-spine.001",
     "上半身2": "ORG-spine.003",
     "首": "ORG-spine.004",
     "頭": "ORG-spine.006",
     "目.L": "ORG-eye.L",
     "目.R": "ORG-eye.R",
+
     "左侧肢体": "#",
     "肩.L": "ORG-shoulder.L",
     "腕.L": "ORG-upper_arm.L",
@@ -124,6 +125,7 @@
     "ひざ.L": "ORG-shin.L",
     "足首.L": "ORG-foot.L",
     "足先EX.L": "ORG-toe.L",
+
     "右侧肢体": "#",
     "肩.R": "ORG-shoulder.R",
     "腕.R": "ORG-upper_arm.R",
@@ -133,42 +135,52 @@
     "ひざ.R": "ORG-shin.R",
     "足首.R": "ORG-foot.R",
     "足先EX.R": "ORG-toe.R",
+
     "右手大拇指": "#",
     "親指０.R": "ORG-thumb.01.R",
     "親指１.R": "ORG-thumb.02.R",
     "親指２.R": "ORG-thumb.03.R",
+
     "右手食指": "#",
     "人指１.R": "ORG-f_index.01.R",
     "人指２.R": "ORG-f_index.02.R",
     "人指３.R": "ORG-f_index.03.R",
+
     "右手中指": "#",
     "中指１.R": "ORG-f_middle.01.R",
     "中指２.R": "ORG-f_middle.02.R",
     "中指３.R": "ORG-f_middle.03.R",
+
     "右手无名指": "#",
     "薬指１.R": "ORG-f_ring.01.R",
     "薬指２.R": "ORG-f_ring.02.R",
     "薬指３.R": "ORG-f_ring.03.R",
+
     "右手小指": "#",
     "小指１.R": "ORG-f_pinky.01.R",
     "小指２.R": "ORG-f_pinky.02.R",
     "小指３.R": "ORG-f_pinky.03.R",
+
     "左手大拇指": "#",
     "親指０.L": "ORG-thumb.01.L",
     "親指１.L": "ORG-thumb.02.L",
     "親指２.L": "ORG-thumb.03.L",
+
     "左手食指": "#",
     "人指１.L": "ORG-f_index.01.L",
     "人指２.L": "ORG-f_index.02.L",
     "人指３.L": "ORG-f_index.03.L",
+
     "左手中指": "#",
     "中指１.L": "ORG-f_middle.01.L",
     "中指２.L": "ORG-f_middle.02.L",
     "中指３.L": "ORG-f_middle.03.L",
+
     "左手无名指": "#",
     "薬指１.L": "ORG-f_ring.01.L",
     "薬指２.L": "ORG-f_ring.02.L",
     "薬指３.L": "ORG-f_ring.03.L",
+
     "左手小指": "#",
     "小指１.L": "ORG-f_pinky.01.L",
     "小指２.L": "ORG-f_pinky.02.L",
