@@ -5,8 +5,7 @@ import sys
 currentFilePath = __file__  # 当前运行的Py文件的路径
 FILE_NAME = os.path.basename(currentFilePath)
 
-# 函数模式初始
-def modeInit(modeName, isDeselect=True, deselectMode="object"):
+def modeInit(modeName, isDeselect=True, deselectMode="object"):  # 函数模式初始
     DEF_NAME = sys._getframe().f_code.co_name
     if modeName == 'OBJECT':
         bpy.ops.object.mode_set(mode='OBJECT')
