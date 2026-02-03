@@ -135,13 +135,12 @@ class buildRigifyController(bpy.types.Operator):
         bpy.ops.pose.armature_apply(selected=False)  # 应用姿态
         modeInit('OBJECT')
 
-        # 实验多元解码
-        def decode(bone, context="unknown") -> str:
+        def decode(bone, context="unknown") -> str:   # 实验多元解码
             DEF_NAME = sys._getframe().f_code.co_name
             try:
                 if not bpy.app.timers.is_registered(lambda: None):  # 强制主线程检查
                     bpy.app.timers.register(lambda: None, first_interval=0.001)
-                raw = getattr(bone, 'name', b'')  #使用 getattr 防止属性不存在导致崩溃，默认值 b''（空字节串），若 name 不存在返回空字节
+                raw = getattr(bone, 'name', b'')  #使用 getattr 防止属性不存在导致崩溃，默认值 b，若 name 不存在返回空字节
                 if isinstance(raw, bytes):  # 判断是否为字节类型
                     try:
                         return raw.decode('utf-8', errors='replace').strip()  # UTF-8解码
@@ -150,10 +149,47 @@ class buildRigifyController(bpy.types.Operator):
                         return raw.decode('latin-1', errors='replace').strip()  # 用latin-1解码
                 return str(raw).strip() if raw else 'bone'
             except Exception as e:
-                print(f"[{printer}/{DEF_NAME}]骨骼：{context} | 错误: {str(e)}")
+                print(f"[{printer}/{DEF_NAME}]骨骼：{bone} | 错误: {str(e)}")
                 return f'{context}'
-        # 函数应用初始动作
-        def applyCustomInitialActions():
+        def addCopyLocationRotationScaleConstraint(MMDBone, RIGBone):  # 实验添加复制位置旋转缩放约束
+            DEF_NAME = sys._getframe().f_code.co_name
+            locationConstraint_Name = '[MMRA] 复制位置'
+            rotationConstraint_Name = '[MMRA] 复制旋转'
+            scaleConstraint_Name = '[MMRA] 复制缩放'
+            modeInit('OBJECT')
+            modeInit('POSE', deselectMode='pose')
+            bpy.context.active_object.pose.bones[MMDBone].select = True  # 将该骨骼设置为选中状态
+            bpy.context.active_object.data.bones.active = bpy.context.active_object.pose.bones[MMDBone].bone  # 将骨骼设置为活动骨骼
+            bpy.ops.pose.constraint_add(type='COPY_LOCATION')#  添加复制位置约束 (COPY_LOCATION)
+            locationConstraint = bpy.context.active_object.pose.bones[MMDBone].constraints[-1]
+            locationConstraint.name = locationConstraint_Name  # 重命名复制位置约束
+            locationConstraint.target = bpy.data.objects[RIG_Name]  # 设置复制位置约束目标为RIG_Name_Object
+            locationConstraint.subtarget = RIGBone  # 设置复制位置约束目标子项为RIGBone
+            locationConstraint.target_space = 'POSE'  # 设置复制位置约束目标空间为POSE
+            locationConstraint.owner_space = 'POSE'  # 设置复制位置约束所有者空间为POSE
+            print(f"[{printer}/{DEF_NAME}]已添加复制位置约束：{locationConstraint_Name}：{MMDBone} -> {RIGBone}")
+            bpy.ops.pose.constraint_add(type='COPY_ROTATION')#  添加复制旋转约束 (COPY_ROTATION)
+            rotationConstraint = bpy.context.active_object.pose.bones[MMDBone].constraints[-1]
+            rotationConstraint.name = rotationConstraint_Name  # 重命名复制旋转约束
+            rotationConstraint.target = bpy.data.objects[RIG_Name]  # 设置复制旋转约束目标为RIG_Name_Object
+            rotationConstraint.subtarget = RIGBone  # 设置复制旋转约束目标子项为RIGBone
+            rotationConstraint.invert_x = True  # 设置复制旋转约束在X轴上不反转
+            rotationConstraint.invert_y = False
+            rotationConstraint.invert_z = False
+            rotationConstraint.mix_mode = 'REPLACE'  # 设置复制旋转约束混合模式为替换
+            rotationConstraint.target_space = 'POSE'  # 设置复制旋转约束目标空间为POSE
+            rotationConstraint.owner_space = 'POSE'  # 设置复制旋转约束所有者空间为POSE
+            print(f"[{printer}/{DEF_NAME}]已添加复制旋转约束：{rotationConstraint_Name}：{MMDBone} -> {RIGBone}")
+            bpy.ops.pose.constraint_add(type='COPY_SCALE')#  添加复制缩放约束 (COPY_SCALE)
+            scaleConstraint = bpy.context.active_object.pose.bones[MMDBone].constraints[-1]
+            scaleConstraint.name = scaleConstraint_Name  # 重命名复制缩放约束
+            scaleConstraint.target = bpy.data.objects[RIG_Name]  # 设置复制缩放约束目标为RIG_Name_Object
+            scaleConstraint.subtarget = RIGBone  # 设置复制缩放约束目标子项为RIGBone
+            scaleConstraint.power = 1.0  # 设置复制缩放约束缩放指数为1.0
+            scaleConstraint.target_space = 'POSE'  # 设置复制缩放约束目标空间为POSE
+            scaleConstraint.owner_space = 'POSE'  # 设置复制缩放约束所有者空间为POSE
+            print(f"[{printer}/{DEF_NAME}]已添加复制缩放约束：{scaleConstraint_Name}：{MMDBone} -> {RIGBone}")
+        def applyCustomInitialActions():  # 应用初始动作
             DEF_NAME = sys._getframe().f_code.co_name
             if not MMRA.enableInitialPose:
                 return
@@ -181,9 +217,7 @@ class buildRigifyController(bpy.types.Operator):
             bpy.context.scene.frame_current = currentFrame  # 恢复当前帧
             self.report({'INFO'}, '应用初始姿势完成！')
             print(f'[{printer}/{DEF_NAME}]应用初始姿势完成！')
-        # 函数融并骨骼
-        def mergeBones(bone, bonesName):
-            DEF_NAME = sys._getframe().f_code.co_name
+        def mergeBones(bone, bonesName):   # 融并骨骼
             bpy.ops.object.mode_set(mode='OBJECT')  # 切换物体模式
             bpy.ops.object.select_all(action='DESELECT')  # 清空选择
             bpy.ops.object.select_pattern(pattern=bone)  # 选择骨架
@@ -202,8 +236,7 @@ class buildRigifyController(bpy.types.Operator):
             """
                 在Blender单选骨骼融并时会默认与下一根骨骼融并
             """
-        # 函数骨骼扭转同步
-        def boneRollSynchronized(armatureName, armature_bone, armature01Name, armature01Name_bone):
+        def boneRollSynchronized(armatureName, armature_bone, armature01Name, armature01Name_bone):  # 骨骼扭转同步
             modeInit('OBJECT')
             bpy.ops.object.select_pattern(pattern=armatureName)  # 选择物体
             armatureName_Object = bpy.data.objects[armatureName]
@@ -227,8 +260,7 @@ class buildRigifyController(bpy.types.Operator):
             bpy.context.active_bone.roll = bone_roll  # 设置扭转值
             bpy.ops.armature.select_all(action='DESELECT')  # 取消所有选择
             modeInit('OBJECT')
-        # 函数修正约束骨骼扭转值
-        def correctRoll(bone):
+        def correctRoll(bone):  # 修正约束骨骼扭转值
             """
                差值 = 公式：原骨骼 - 处理完的骨骼
                扭转值（修正） = 差值 + 约束骨骼
@@ -268,30 +300,31 @@ class buildRigifyController(bpy.types.Operator):
             bpy.context.active_bone.roll = torsionValue
             bpy.ops.armature.select_all(action='DESELECT')  # 取消所有选择
             modeInit('OBJECT')
-        # 函数批量删除骨骼
-        def delBone(armature, boneNames):
+        def delBone(armature, boneNames):  # 批量删除骨骼
             DEF_NAME = sys._getframe().f_code.co_name
             bpy.ops.object.mode_set(mode='OBJECT')  # 切换物体模式
             bpy.ops.object.select_all(action='DESELECT')  # 清空选择
             bpy.ops.object.select_pattern(pattern=armature)  # 选择物体
-            skeleton_Object = bpy.data.objects[armature]
-            bpy.context.view_layer.objects.active = skeleton_Object  # 将该物体设置为活动对象
+            armature_Object = bpy.data.objects[armature]
+            bpy.context.view_layer.objects.active = armature_Object  # 将该物体设置为活动对象
             bpy.ops.object.mode_set(mode='EDIT')   # 切换到编辑模式
             bpy.ops.armature.select_all(action='DESELECT')  # 取消所有选择
             # 删除骨骼
             for boneName in boneNames:
-                bpy.ops.armature.select_all(action='DESELECT')
-                bpy.ops.object.select_pattern(pattern=boneName)  # 选择活动骨骼
-                armature = bpy.context.edit_object.data  # 获取当前处于编辑模式的对象的数据
-                bone = armature.edit_bones.get(boneName)  # 从骨架的编辑骨骼集合中获取指定名称的骨骼
-                bpy.context.edit_object.data.edit_bones.active = bone  # 将该骨骼设置为活动骨骼
-                bpy.ops.armature.delete()  # 删除骨骼
-                print(f'[{printer}/{DEF_NAME}]已删除骨骼：', boneName)
+                if boneName in armature_Object.data.bones:
+                    bpy.ops.armature.select_all(action='DESELECT')
+                    bpy.ops.object.select_pattern(pattern=boneName)  # 选择活动骨骼
+                    armature = bpy.context.edit_object.data  # 获取当前处于编辑模式的对象的数据
+                    bone = armature.edit_bones.get(boneName)  # 从骨架的编辑骨骼集合中获取指定名称的骨骼
+                    bpy.context.edit_object.data.edit_bones.active = bone  # 将该骨骼设置为活动骨骼
+                    bpy.ops.armature.delete()  # 删除骨骼
+                    print(f'[{printer}/{DEF_NAME}]已删除骨骼：', boneName)
+                else:
+                    print(f'[{printer}/{DEF_NAME}]未找到骨骼：', boneName)
             bpy.ops.armature.select_all(action='DESELECT')  # 取消所有选择
             bpy.ops.object.mode_set(mode='OBJECT')  # 切换物体模式
             bpy.ops.object.select_all(action='DESELECT')  # 清空选择
-        # 函数MMD骨骼-Rig骨骼对齐
-        def MMD_RIGAlignment(MMD_boneName, RIG_boneName):
+        def MMD_RIGAlignment(MMD_boneName, RIG_boneName):  # MMD骨骼-Rig骨骼对齐
             DEF_NAME = sys._getframe().f_code.co_name
             modeInit('OBJECT')
             bpy.ops.object.select_pattern(pattern=arm2Name)  # 选择物体
@@ -320,31 +353,13 @@ class buildRigifyController(bpy.types.Operator):
                 RIG_Armature_data = bpy.context.edit_object.data  # 获取当前编辑的RIG骨架数据
                 RIG_Armature_data_bone = RIG_Armature_data.edit_bones.get(RIG_boneName)  # 获取RIG骨骼
                 bpy.context.edit_object.data.edit_bones.active = RIG_Armature_data_bone  # 设置为活动骨骼
-                if 'spine' != decode(MMD_Armature_data_bone, "MMD_RIGAlignment"):
-                    bpy.context.active_bone.head[0] = MMD_Armature_data_bone_head_x  # 修改头部的x坐标
-                    bpy.context.active_bone.head[1] = MMD_Armature_data_bone_head_y  # 修改头部的y坐标
-                    bpy.context.active_bone.head[2] = MMD_Armature_data_bone_head_z  # 修改头部的z坐标
-                    bpy.context.active_bone.tail[0] = MMD_Armature_data_bone_tail_x  # 修改尾部的x坐标
-                    bpy.context.active_bone.tail[1] = MMD_Armature_data_bone_tail_y  # 修改尾部的y坐标
-                    bpy.context.active_bone.tail[2] = MMD_Armature_data_bone_tail_z  # 修改尾部的z坐标
-                else:
-                    bpy.context.active_bone.head[0] = MMD_Armature_data_bone_tail_x  # 修改头部的x坐标
-                    bpy.context.active_bone.head[1] = MMD_Armature_data_bone_tail_y  # 修改头部的y坐标
-                    bpy.context.active_bone.head[2] = MMD_Armature_data_bone_tail_z  # 修改头部的z坐标
-                    bpy.context.active_bone.tail[0] = MMD_Armature_data_bone_head_x  # 修改尾部的x坐标
-                    bpy.context.active_bone.tail[1] = MMD_Armature_data_bone_head_y  # 修改尾部的y坐标
-                    bpy.context.active_bone.tail[2] = MMD_Armature_data_bone_head_z  # 修改尾部的z坐标
-                    bpy.ops.armature.extrude_move(ARMATURE_OT_extrude={
-                                                    "forked": False},
-                                                TRANSFORM_OT_translate={
-                                                    "value": (0.0, 0.1, -0.0),
-                                                    "orient_type": 'GLOBAL',
-                                                    "orient_matrix": ((1, 0, 0), (0, 1, 0), (0, 0, 1))})  # 延伸当前骨骼，移动偏移：沿 Y 轴方向移动 0.1 单位，Z 轴移动 -0.0 单位（实际没有 Z 轴变化），使用全局坐标系进行变换
-                    bpy.context.active_bone.tail[0] = MMD_Armature_data_bone_tail_x  # 修改尾部的x坐标
-                    bpy.context.active_bone.tail[1] = MMD_Armature_data_bone_tail_y  # 修改尾部的y坐标
-                    bpy.context.active_bone.tail[2] = MMD_Armature_data_bone_tail_z  # 修改尾部的z坐标
-                    # bpy.context.active_bone.name = "spine.007"  # 实验骨骼命名
-                    bpy.ops.armature.select_all(action='DESELECT')
+                # if 'spine' != RIG_Armature_data_bone.name:
+                bpy.context.active_bone.head[0] = MMD_Armature_data_bone_head_x  # 修改头部的x坐标
+                bpy.context.active_bone.head[1] = MMD_Armature_data_bone_head_y  # 修改头部的y坐标
+                bpy.context.active_bone.head[2] = MMD_Armature_data_bone_head_z  # 修改头部的z坐标
+                bpy.context.active_bone.tail[0] = MMD_Armature_data_bone_tail_x  # 修改尾部的x坐标
+                bpy.context.active_bone.tail[1] = MMD_Armature_data_bone_tail_y  # 修改尾部的y坐标
+                bpy.context.active_bone.tail[2] = MMD_Armature_data_bone_tail_z  # 修改尾部的z坐标
                 # 作用spine.004-spine.003连接
                 if decode(MMD_Armature_data_bone, "MMD_RIGAlignment") == 'spine.004':
                     spine003 = MMD_Armature_data.edit_bones.get('spine.003')
@@ -357,30 +372,28 @@ class buildRigifyController(bpy.types.Operator):
                 bpy.ops.object.select_pattern(pattern="spine", extend=False)  # 选择活动骨骼
                 bpy.context.edit_object.data.edit_bones.active = bpy.context.edit_object.data.edit_bones.get("spine")  # 设置活动骨骼
                 bpy.ops.armature.parent_clear(type='DISCONNECT')  # 清除父子关系
-                Rig_head = bpy.context.active_bone.head
-                Rig_tail = bpy.context.active_bone.tail
-                Rig_roll = bpy.context.active_bone.roll
-                print(f"[{printer}/{DEF_NAME}]骨骼 {RIG_Armature_data_bone.name} 头部坐标({Rig_head[0]:.6f}, {Rig_head[1]:.6f}, {Rig_head[2]:.6f})，尾端坐标({Rig_tail[0]:.6f}, {Rig_tail[1]:.6f}, {Rig_tail[2]:.6f})，扭转值: {Rig_roll:.6f}")
+                # Rig_head = bpy.context.active_bone.head
+                # Rig_tail = bpy.context.active_bone.tail
+                # Rig_roll = bpy.context.active_bone.roll
+                # print(f"[{printer}/{DEF_NAME}]骨骼 {RIG_Armature_data_bone.name} 头部坐标({Rig_head[0]:.6f}, {Rig_head[1]:.6f}, {Rig_head[2]:.6f})，尾端坐标({Rig_tail[0]:.6f}, {Rig_tail[1]:.6f}, {Rig_tail[2]:.6f})，扭转值: {Rig_roll:.6f}")
                 bpy.ops.armature.select_all(action='DESELECT')
                 bpy.ops.object.mode_set(mode='OBJECT')
             else:
                 print(f"[{printer}/{DEF_NAME}]骨骼 {MMD_boneName} 不存在。")
                 self.report({'WARNING'}, "骨骼不存在。")
-        # 函数删除物体
-        def deleteObject(objectName):
+        def deleteObject(objectName):  # 删除物体
             if bpy.data.objects.get(objectName) is not None:
                 bpy.context.view_layer.objects.active = bpy.data.objects.get(objectName) # 将物体设置为活动物体
                 bpy.data.objects.get(objectName).select_set(True)  # 将需要删除的物体设置为选中状态
                 bpy.ops.object.delete()  # 执行删除物体的操作
-        # 函数添加复制变换约束
-        def addConstraints(MMDBone, RIGBone):
+        def addConstraints(MMDBone, RIGBone):  # 添加复制变换约束
             DEF_NAME = sys._getframe().f_code.co_name
-            constraints_name1 = 'MMRA 复制变换'
+            constraints_name1 = '[MMRA]复制变换'
             modeInit('OBJECT')  # 切换物体模式并清空选择
             bpy.ops.object.select_pattern(pattern=armName)  # 选择物体
             bpy.context.view_layer.objects.active = armObject  # 将该物体设置为活动对象
             # 判断骨骼是否存在
-            if MMDBone in armObject.data.bones:
+            if MMDBone in armObject.data.bones and MMDBone != '下半身':
                 modeInit('OBJECT')
                 modeInit('POSE', deselectMode='pose')
                 bpy.context.active_object.pose.bones[MMDBone].select = True  # 将该骨骼设置为选中状态
@@ -393,25 +406,25 @@ class buildRigifyController(bpy.types.Operator):
                 boneRollSynchronized(rigifyName, RIGBone, armName, MMDBone)  # 复制 RIG_armatue 骨骼的扭转值到 MMD_armature 骨骼
                 correctRoll(MMDBone)
                 modeInit('OBJECT')
+            elif MMDBone in armObject.data.bones and MMDBone == '下半身':  # 针对骨骼“做特殊处理”
+                addCopyLocationRotationScaleConstraint(MMDBone, RIGBone)
+                print(f"[{printer}/{DEF_NAME}]骨骼 {MMDBone} 已约束拆分！！！")  # 实验
             else:
                 print(f"[{printer}/{DEF_NAME}]骨骼 {MMDBone} 不存在！！！")
                 self.report({'WARNING'}, "骨骼不存在。")
-        # 函数加骨骼父级
-        def addBoneParent(childBoneName, parentBoneName):
+        def addBoneParent(childBoneName, parentBoneName):  # 加骨父级
             bpy.ops.object.mode_set(mode='EDIT')  # 切换到编辑模式
             armature = bpy.context.object  # 获取骨架对象
             # 获取父骨骼和子骨骼
             childBone = armature.data.edit_bones.get(childBoneName)
             parentBone = armature.data.edit_bones.get(parentBoneName)
             childBone.parent = parentBone  # 设置父子关系
-        # 函数选择骨骼
-        def selectBones(bone):
+        def selectBones(bone):  # 选择骨骼
             bpy.ops.object.select_pattern(pattern=bone, extend=False)  # 选择活动骨骼，不扩展选择（extend=False）
             data = bpy.context.edit_object.data  # 获取当前编辑对象（骨架）的数据
             bone = data.edit_bones.get(bone)  # 从骨架的编辑骨骼集合中获取指定名称的骨骼
             bpy.context.edit_object.data.edit_bones.active = bone
-        # 函数复制父级骨骼
-        def copyParentsBone(bone):
+        def copyParentsBone(bone):  # 复制父级骨骼
             modeInit('OBJECT')
             bpy.ops.object.select_pattern(pattern=rigifyName)  # 选择物体
             bpy.context.view_layer.objects.active = bpy.data.objects[rigifyName]  # 将该物体设置为活动对象
@@ -431,8 +444,7 @@ class buildRigifyController(bpy.types.Operator):
             for bone in poseBones:
                 for constraint in bone.constraints:
                     bone.constraints.remove(constraint)
-        # 函数复制旋转
-        def copyRotation(armature, bone, bone_1):
+        def copyRotation(armature, bone, bone_1):  # 复制旋转
             modeInit('OBJECT')
             bpy.ops.object.select_pattern(pattern=armature)  # 选择物体
             armature_Object = bpy.data.objects[armature]
@@ -475,6 +487,11 @@ class buildRigifyController(bpy.types.Operator):
         bpy.ops.object.select_pattern(pattern=RIG_Name)  # 选择物体
         bpy.context.view_layer.objects.active = RIG_Name_Object  # 将该物体设置为活动对象
         self.spineContinuityVerify(RIG_Name)  # 确保脊柱骨骼连续性
+        if "spine.007" in RIG_Name_Object.data.bones:
+            modeInit('EDIT', deselectMode="armature")
+            delBone(RIG_Name, ['spine.007'])
+            print(f"[{printer}]骨骼spine.007移除完成！")
+            modeInit('OBJECT')
         bpy.ops.pose.rigify_generate('INVOKE_DEFAULT')  # 生成Rigify控制器
         rigifyName = bpy.context.active_object.name  # 当前活动物体（rigify控制器）名称
         bpy.context.object.data.collections_all["ORG"].is_visible = True  # 显示ORG
@@ -504,7 +521,7 @@ class buildRigifyController(bpy.types.Operator):
                 addConstraints(key, value)
         modeInit('OBJECT')
         print(f"[{printer}]约束添加完成！")
-
+        
         bpy.ops.object.select_pattern(pattern=rigifyName)
         rigifyName_Object = bpy.data.objects[rigifyName]
         bpy.context.view_layer.objects.active = rigifyName_Object  # 将该物体设置为活动对象
@@ -557,8 +574,7 @@ class buildRigifyController(bpy.types.Operator):
         bpy.context.object.pose.bones["upper_arm_parent.L"]["IK_Stretch"] = 0
         bpy.context.object.pose.bones["upper_arm_parent.R"]["IK_Stretch"] = 0
         bpy.ops.pose.select_all(action='DESELECT')  # 取消所有选择
-        # 是否启用级向
-        if MMRA.polarTarget:
+        if MMRA.polarTarget:  # 是否启用级向
             bones = [('upper_arm_ik.L', 'upper_arm_parent.L'), ('upper_arm_ik.R', 'upper_arm_parent.R')]
             for ik_bone_name, parent_bone_name in bones:
                 # 设置IK骨骼为活动骨骼并选择
@@ -567,8 +583,7 @@ class buildRigifyController(bpy.types.Operator):
                 bpy.context.active_object.data.bones.active = ik_bone
                 bpy.context.object.pose.bones[parent_bone_name]["pole_vector"] = True  # 启用级向
                 ik_bone.select = False  # 取消选择当前骨骼以便下次循环
-        # 肩膀联动
-        if MMRA.shoulderLinkage:
+        if MMRA.shoulderLinkage:  # 肩膀联动
             copyRotation(rigifyName, 'shoulder.R', 'ORG-shoulder.R_parent')
             copyRotation(rigifyName, 'shoulder.L', 'ORG-shoulder.L_parent')
         bpy.context.active_object.pose.bones['root'].select = True
@@ -577,8 +592,7 @@ class buildRigifyController(bpy.types.Operator):
         bpy.ops.object.mode_set(mode='OBJECT')  # 切换物体模式
         bpy.context.object.name = armName + '_' + rigifyName  # 改名称
         bpy.ops.object.select_all(action='DESELECT')
-        # 遍历物体名称列表，调用delete_object函数删除物体
-        for objectName in [RIG_Name, arm2Name, arm3Name]:
+        for objectName in [RIG_Name, arm2Name, arm3Name]:  # 遍历物体名称列表，调用delete_object函数删除物体
             deleteObject(objectName)
         if MMRA.bendBones:
             # 设置MMD骨骼
