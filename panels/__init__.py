@@ -36,10 +36,10 @@ class MMRA_property(bpy.types.PropertyGroup):
         subtype='FILE_PATH',
         description="初始动作路径"
     )
-    number: bpy.props.IntProperty(
-        name="Int Config",
-        default=2,
-    )
+    # number: bpy.props.IntProperty(
+    #     name="Int Config",
+    #     default=2,
+    # )
     boolean: bpy.props.BoolProperty(
         name="Boolean Config",
         default=False,
@@ -61,11 +61,11 @@ class MMRA_property(bpy.types.PropertyGroup):
         default=False,
         description="是否启用初始姿态。"
     )
-    json_filepath: bpy.props.StringProperty(
-        name="",
-        subtype='FILE_PATH',
-        description="导入json字典预设"
-    )
+    # json_filepath: bpy.props.StringProperty(
+    #     name="",
+    #     subtype='FILE_PATH',
+    #     description="导入json字典预设"
+    # )
     importPresets: bpy.props.BoolProperty(
         name="Import bonePresets",
         default=False,
@@ -76,22 +76,18 @@ class MMRA_property(bpy.types.PropertyGroup):
         default=True,
         description="非MMD骨骼不要启用,请手动弯曲骨骼"
     )
-    make_presets: bpy.props.BoolProperty(
-        default=True,
-    )
-    number: bpy.props.IntProperty(
-        default=0,
-    )
-    json_txt: bpy.props.StringProperty(
-        name="",
-        subtype='FILE_NAME',
-    )
-    designated: bpy.props.BoolProperty(
-        default=True,
-    )
-    designated: bpy.props.BoolProperty(
-        default=True,
-    )
-    Copy_the_file: bpy.props.BoolProperty(
-        default=True,
-    )
+#     make_presets: bpy.props.BoolProperty(
+#         default=True,
+#     )
+#     number: bpy.props.IntProperty(
+#         default=0,
+#     )
+#     json_txt: bpy.props.StringProperty(
+#         name="",
+#         subtype='FILE_NAME',
+#     )
+#     designated: bpy.props.BoolProperty(
+#         default=True,
+#     )
+#     designated: bpy.props.BoolProperty(
+# )
