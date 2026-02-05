@@ -484,10 +484,8 @@ class buildRigifyController(bpy.types.Operator):
             # 肩膀
             copyParentsBone('ORG-shoulder.R')
             copyParentsBone('ORG-shoulder.L')
-        
         bpy.ops.object.mode_set(mode='POSE')  # 进入姿态模式
         bpy.ops.pose.armature_apply(selected=False)  # 应用姿态
-        
         # 添加父级骨骼，眼睛
         addBoneParent('ORG-eye.LParent', 'ORG-eye.L')
         addBoneParent('ORG-eye.RParent', 'ORG-eye.R')
@@ -496,12 +494,10 @@ class buildRigifyController(bpy.types.Operator):
         addBoneParent('肩C.L', '腕.L')  # 肩膀控制器父级设置为腕.L，以保证手臂装饰联动
         addBoneParent('肩C.R', '腕.R')
         bpy.context.view_layer.objects.active = RIG_Name_Object
-
         if MMRA.shoulderLinkage:
             # 肩膀
             addBoneParent('ORG-shoulder.RParent', 'ORG-RIG_armatue.R')
             addBoneParent('ORG-shoulder.LParent', 'ORG-RIG_armatue.L')
-
         for key, value in JSON_text['添加约束'].items():
             if value == '#':
                 continue  # 跳过注释行
