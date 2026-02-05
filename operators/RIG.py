@@ -35,7 +35,7 @@ class buildRigifyController(bpy.types.Operator):
             currentBone = bpy.context.object.data.edit_bones.get(spineBones[i])  # 获取当前骨骼（第i个）
             nextBone = bpy.context.object.data.edit_bones.get(spineBones[i + 1])  # 获取下一个骨骼（第i+1个）
             if currentBone and nextBone:  # 如果两个骨骼都存在
-                if (currentBone.tail - nextBone.head).length > 0.001 and currentBone.name not in ["shoulder.L", "shoulder.R"] and nextBone.name not in ["shoulder.L", "shoulder.R"]:  # 检查骨骼连接是否断开（距离大于0.001）
+                if (currentBone.tail - nextBone.head).length > 0.001 and nextBone.name not in ["shoulder.L", "shoulder.R"]:  # 检查骨骼连接是否断开（距离大于0.001）
                     if not wetherReported:
                         self.report({'WARNING'}, '检测到未连接的骨骼，正在修复……（详情见系统命令行）')
                         wetherReported = True
@@ -44,6 +44,9 @@ class buildRigifyController(bpy.types.Operator):
                 if not currentBone.use_connect:
                     currentBone.use_connect = True  # 启用当前骨骼的连接
                     print(f"修复骨骼启用相连项: {currentBone.name}")  # 打印调试信息，显示正在修复哪两个骨骼的连接
+                if not nextBone.use_connect:
+                    nextBone.use_connect = True  # 启用下一个骨骼的连接
+                    print(f"修复骨骼启用相连项: {nextBone.name}")  # 打印调试信息，显示正在修复哪两个骨骼的连接
         bpy.ops.object.mode_set(mode='OBJECT')  # 返回物体模式
 
     def execute(self, context: bpy.types.Context):
@@ -158,7 +161,7 @@ class buildRigifyController(bpy.types.Operator):
                 locationConstraint.subtarget = ORG_boneName_spine  # 设置复制位置约束目标子项为rigifyName
                 locationConstraint.target_space = 'POSE'  # 设置复制位置约束目标空间为POSE
                 locationConstraint.owner_space = 'POSE'  # 设置复制位置约束所有者空间为POSE
-                print(f"[{printer}/{DEF_NAME}]已添加复制位置约束：{locationConstraint_Name}：{MMDBone} -> {rigifyName}")
+
                 bpy.ops.pose.constraint_add(type='COPY_ROTATION')#  添加复制旋转约束 (COPY_ROTATION)
                 rotationConstraint = bpy.context.active_object.pose.bones[MMDBone].constraints[-1]
                 rotationConstraint.name = rotationConstraint_Name  # 重命名复制旋转约束
@@ -170,7 +173,7 @@ class buildRigifyController(bpy.types.Operator):
                 rotationConstraint.mix_mode = 'REPLACE'  # 设置复制旋转约束混合模式为替换
                 rotationConstraint.target_space = 'POSE'  # 设置复制旋转约束目标空间为POSE
                 rotationConstraint.owner_space = 'POSE'  # 设置复制旋转约束所有者空间为POSE
-                print(f"[{printer}/{DEF_NAME}]已添加复制旋转约束：{rotationConstraint_Name}：{MMDBone} -> {rigifyName}")
+
                 bpy.ops.pose.constraint_add(type='COPY_SCALE')#  添加复制缩放约束 (COPY_SCALE)
                 scaleConstraint = bpy.context.active_object.pose.bones[MMDBone].constraints[-1]
                 scaleConstraint.name = scaleConstraint_Name  # 重命名复制缩放约束
@@ -179,9 +182,9 @@ class buildRigifyController(bpy.types.Operator):
                 scaleConstraint.power = 1.0  # 设置复制缩放约束缩放指数为1.0
                 scaleConstraint.target_space = 'POSE'  # 设置复制缩放约束目标空间为POSE
                 scaleConstraint.owner_space = 'POSE'  # 设置复制缩放约束所有者空间为POSE
-                print(f"[{printer}/{DEF_NAME}]已添加复制缩放约束：{scaleConstraint_Name}：{MMDBone} -> {rigifyName}")
+                print(f"[{printer}/{DEF_NAME}]骨骼 {MMDBone} 已约束拆分。")
             else:
-                print(f"[{printer}/{DEF_NAME}]骨骼 {MMDBone} 不存在")
+                print(f"[{printer}/{DEF_NAME}]骨骼 {MMDBone} 不存在。")
                 self.report({'WARNING'}, "骨骼不存在。")
         def applyCustomInitialActions():  # 应用初始动作
             DEF_NAME = sys._getframe().f_code.co_name
@@ -479,11 +482,14 @@ class buildRigifyController(bpy.types.Operator):
             # 肩膀
             copyParentsBone('ORG-shoulder.R')
             copyParentsBone('ORG-shoulder.L')
+        
         bpy.ops.object.mode_set(mode='POSE')  # 进入姿态模式
         bpy.ops.pose.armature_apply(selected=False)  # 应用姿态
-        # 添加父级骨骼，眼睛
+        
+        # BUG添加父级骨骼，眼睛
         addBoneParent('ORG-eye.LParent', 'ORG-eye.L')
         addBoneParent('ORG-eye.RParent', 'ORG-eye.R')
+
         if MMRA.shoulderLinkage:
             # 肩膀
             addBoneParent('ORG-shoulder.RParent', 'ORG-RIG_armatue.R')
@@ -501,7 +507,7 @@ class buildRigifyController(bpy.types.Operator):
                 addConstraints(key, value)
         modeInit('OBJECT')
         print(f"[{printer}]约束添加完成！")
-        
+    
         bpy.ops.object.select_pattern(pattern=rigifyName)
         rigifyName_Object = bpy.data.objects[rigifyName]
         bpy.context.view_layer.objects.active = rigifyName_Object  # 将该物体设置为活动对象
@@ -538,6 +544,8 @@ class buildRigifyController(bpy.types.Operator):
         addBoneParent('hand_ik.R', 'torso_root')
         addBoneParent('hand_ik.L', 'torso_root')
         addBoneParent('torso_root', 'root')
+        addBoneParent('MCH-heel.02_rock2.L', 'torso_root')
+        addBoneParent('MCH-heel.02_rock2.R', 'torso_root')
         bpy.ops.object.mode_set(mode='POSE')  # 进入姿态模式
         bpy.context.active_pose_bone.custom_shape = bpy.data.objects["WGT-rig_root"]  # 为当前选中的姿态骨骼设置自定义控制器形状
         bpy.context.scene.tool_settings.transform_pivot_point = 'INDIVIDUAL_ORIGINS'  #将变换中心点设为独立原点，便于单独操作骨骼
