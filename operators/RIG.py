@@ -315,9 +315,9 @@ class buildRigifyController(bpy.types.Operator):
                     bone = armature.edit_bones.get(boneName)  # 从骨架的编辑骨骼集合中获取指定名称的骨骼
                     bpy.context.edit_object.data.edit_bones.active = bone  # 将该骨骼设置为活动骨骼
                     bpy.ops.armature.delete()  # 删除骨骼
-                    print(f'[{printer}/{DEF_NAME}]已删除骨骼：', boneName)
+                    print(f'[{printer}/{DEF_NAME}]已删除骨骼', boneName)
                 else:
-                    print(f'[{printer}/{DEF_NAME}]未找到骨骼：', boneName)
+                    print(f'[{printer}/{DEF_NAME}]未找到骨骼', boneName)
             bpy.ops.armature.select_all(action='DESELECT')  # 取消所有选择
             bpy.ops.object.mode_set(mode='OBJECT')  # 切换物体模式
             bpy.ops.object.select_all(action='DESELECT')  # 清空选择
@@ -398,6 +398,8 @@ class buildRigifyController(bpy.types.Operator):
             # 获取父骨骼和子骨骼
             childBone = armature.data.edit_bones.get(childBoneName)
             parentBone = armature.data.edit_bones.get(parentBoneName)
+            if parentBone.parent == childBone:
+                parentBone.parent = None
             childBone.parent = parentBone  # 设置父子关系
         def selectBones(bone):  # 选择骨骼
             bpy.ops.object.select_pattern(pattern=bone, extend=False)  # 选择活动骨骼，不扩展选择（extend=False）
@@ -486,14 +488,20 @@ class buildRigifyController(bpy.types.Operator):
         bpy.ops.object.mode_set(mode='POSE')  # 进入姿态模式
         bpy.ops.pose.armature_apply(selected=False)  # 应用姿态
         
-        # BUG添加父级骨骼，眼睛
+        # 添加父级骨骼，眼睛
         addBoneParent('ORG-eye.LParent', 'ORG-eye.L')
         addBoneParent('ORG-eye.RParent', 'ORG-eye.R')
+        modeInit('OBJECT')
+        bpy.context.view_layer.objects.active = armObject
+        addBoneParent('肩C.L', '腕.L')  # 肩膀控制器父级设置为腕.L，以保证手臂装饰联动
+        addBoneParent('肩C.R', '腕.R')
+        bpy.context.view_layer.objects.active = RIG_Name_Object
 
         if MMRA.shoulderLinkage:
             # 肩膀
             addBoneParent('ORG-shoulder.RParent', 'ORG-RIG_armatue.R')
             addBoneParent('ORG-shoulder.LParent', 'ORG-RIG_armatue.L')
+
         for key, value in JSON_text['添加约束'].items():
             if value == '#':
                 continue  # 跳过注释行
