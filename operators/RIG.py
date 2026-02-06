@@ -9,7 +9,7 @@ from .. import getToml
 
 ADDON_NAME = getToml()['name']
 
-class buildRigifyController(bpy.types.Operator):
+class buildRigifyController(bpy.types.Operator):  # 构建MMD-Rigify控制器
     bl_idname = "object.build_rigify_controller"
     bl_label = "构建MMD-Rigify控制器"
     bl_description = "基于MMD模型构建Rigify控制器系统"
@@ -21,8 +21,10 @@ class buildRigifyController(bpy.types.Operator):
         if OBJ is not None and OBJ.type == 'ARMATURE':
                 return True
         return False
-    # 函数脊柱连续性验证函数
-    def spineContinuityVerify(self, armatureName):
+    def spineContinuityVerify(self, armatureName):  # 脊柱连续性验证与修复
+        CLASS_NAME = self.__class__.__name__
+        DEF_NAME = sys._getframe().f_code.co_name
+        printer = f'{ADDON_NAME}/{CLASS_NAME}/{DEF_NAME}'
         wetherReported =  False
         bpy.ops.object.mode_set(mode='OBJECT')  # 将当前对象设为对象模式
         bpy.ops.object.select_all(action='DESELECT')  # 取消选择所有对象
@@ -40,15 +42,14 @@ class buildRigifyController(bpy.types.Operator):
                         self.report({'WARNING'}, '检测到未连接的骨骼，正在修复……（详情见系统命令行）')
                         wetherReported = True
                     nextBone.head = currentBone.tail  # 将下一个骨骼的头部移到当前骨骼的尾部位置，使它们连接起来
-                    print(f"修复骨骼连续性: {currentBone.name} -> {nextBone.name}")  # 打印调试信息，显示正在修复哪两个骨骼的连接
+                    print(f"[{printer}]修复骨骼连续性: {currentBone.name} -> {nextBone.name}")  # 打印调试信息，显示正在修复哪两个骨骼的连接
                 if not currentBone.use_connect:
                     currentBone.use_connect = True  # 启用当前骨骼的连接
-                    print(f"修复骨骼启用相连项: {currentBone.name}")  # 打印调试信息，显示正在修复哪两个骨骼的连接
+                    print(f"[{printer}]修复骨骼启用相连项: {currentBone.name}")  # 打印调试信息，显示正在修复哪两个骨骼的连接
                 if not nextBone.use_connect:
                     nextBone.use_connect = True  # 启用下一个骨骼的连接
-                    print(f"修复骨骼启用相连项: {nextBone.name}")  # 打印调试信息，显示正在修复哪两个骨骼的连接
+                    print(f"[{printer}]修复骨骼启用相连项: {nextBone.name}")  # 打印调试信息，显示正在修复哪两个骨骼的连接
         bpy.ops.object.mode_set(mode='OBJECT')  # 返回物体模式
-
     def execute(self, context: bpy.types.Context):
         CLASS_NAME = self.__class__.__name__
         printer = f'{ADDON_NAME}/{CLASS_NAME}'
@@ -85,8 +86,7 @@ class buildRigifyController(bpy.types.Operator):
                 "mode": 'TRANSLATION'},
             TRANSFORM_OT_translate={
                 "value": (0, 0, 0),
-                "orient_matrix": ((1, 0, 0), (0, 1, 0), (0, 0, 1))}
-        )
+                "orient_matrix": ((1, 0, 0), (0, 1, 0), (0, 0, 1))})
         arm2Name = bpy.context.active_object.name
         bpy.ops.object.duplicate_move(
             OBJECT_OT_duplicate={
@@ -94,8 +94,7 @@ class buildRigifyController(bpy.types.Operator):
                 "mode": 'TRANSLATION'},
             TRANSFORM_OT_translate={
                 "value": (0, 0, 0),
-                "orient_matrix": ((1, 0, 0), (0, 1, 0), (0, 0, 1))}
-        )
+                "orient_matrix": ((1, 0, 0), (0, 1, 0), (0, 0, 1))})
         arm3Name = bpy.context.active_object.name
         print(f"[{printer}]内部数据（MMD）准备就绪！")
 
@@ -446,6 +445,51 @@ class buildRigifyController(bpy.types.Operator):
                 bpy.context.object.pose.bones[bone].constraints[constraints_name].target = bpy.data.objects[armature]
                 bpy.context.object.pose.bones[bone].constraints[constraints_name].subtarget = bone_1
                 bpy.context.object.pose.bones[bone].constraints[constraints_name].influence = 0.5
+        def bonesAlignmnet(armature, armature_bone, armature_1, armature_1_bone):  # 骨骼对齐
+            '''
+                骨骼 armature_bone 对齐到骨骼 armature_1_bone
+            '''
+            DEF_NAME = sys._getframe().f_code.co_name
+            modeInit('OBJECT')
+            bpy.ops.object.select_pattern(pattern=armature_1)  # 选择物体
+            armature_1_Object = bpy.data.objects[armature_1]
+            bpy.context.view_layer.objects.active = armature_1_Object  # 将该物体设置为活动对象
+            # 判断骨骼是否存在
+            if armature_1_bone in armature_1_Object.data.bones:
+                modeInit('EDIT', deselectMode="armature")
+                bpy.context.view_layer.objects.active = armature_1_Object  # 将该物体设置为活动对象
+                bpy.ops.object.select_pattern(pattern=armature_1_bone, extend=False)  # 选择活动骨骼
+                armature_1_bone_data = bpy.context.edit_object.data
+                armature_1_bone_data_bone = armature_1_bone_data.edit_bones.get(armature_1_bone)
+                bpy.context.edit_object.data.edit_bones.active = armature_1_bone_data_bone
+                armature_1_bone_data_bone_head = bpy.context.active_bone.head
+                armature_1_bone_data_bone_tail = bpy.context.active_bone.tail
+                armature_1_bone_data_bone_head_x = armature_1_bone_data_bone_head[0]  # X坐标
+                armature_1_bone_data_bone_head_y = armature_1_bone_data_bone_head[1]  # Y坐标
+                armature_1_bone_data_bone_head_z = armature_1_bone_data_bone_head[2]  # Z坐标
+                armature_1_bone_data_bone_tail_x = armature_1_bone_data_bone_tail[0]
+                armature_1_bone_data_bone_tail_y = armature_1_bone_data_bone_tail[1]  # Z坐标
+                armature_1_bone_data_bone_tail_z = armature_1_bone_data_bone_tail[2]
+                modeInit('OBJECT')
+                bpy.ops.object.select_pattern(pattern=armature)  # 选择物体
+                armature_Object = bpy.data.objects[armature]
+                bpy.context.view_layer.objects.active = armature_Object  # 将该物体设置为活动对象
+                modeInit('EDIT', deselectMode="armature")
+                bpy.ops.object.select_pattern(pattern=armature_bone, extend=False)  # 选择活动骨骼
+                armature_bone_data = bpy.context.edit_object.data  # 获取当前编辑的RIG骨架数据
+                armature_bone_data = armature_bone_data.edit_bones.get(armature_bone)  # 获取RIG骨骼
+                bpy.context.edit_object.data.edit_bones.active = armature_bone_data  # 设置为活动骨骼
+                bpy.context.active_bone.head[0] = armature_1_bone_data_bone_head_x  # 修改头部的x坐标
+                bpy.context.active_bone.head[1] = armature_1_bone_data_bone_head_y  # 修改头部的y坐标
+                bpy.context.active_bone.head[2] = armature_1_bone_data_bone_head_z  # 修改头部的z坐标
+                bpy.context.active_bone.tail[0] = armature_1_bone_data_bone_tail_x  # 修改尾部的x坐标
+                bpy.context.active_bone.tail[1] = armature_1_bone_data_bone_tail_y  # 修改尾部的y坐标
+                bpy.context.active_bone.tail[2] = armature_1_bone_data_bone_tail_z  # 修改尾部的z坐标
+                bpy.ops.armature.select_all(action='DESELECT')
+                bpy.ops.object.mode_set(mode='OBJECT')
+            else:
+                print(f"[{printer}/{DEF_NAME}]骨骼 {armature_1_bone} 不存在。")
+                self.report({'WARNING'}, f"骨骼 {armature_1_bone} 不存在。")  
         print(f"[{printer}]函数组加载完成！")
 
         # 作用应用初始动作并对齐骨骼
@@ -493,6 +537,8 @@ class buildRigifyController(bpy.types.Operator):
         bpy.context.view_layer.objects.active = armObject
         addBoneParent('肩C.L', '腕.L')  # 肩膀控制器父级设置为腕.L，以保证手臂装饰联动
         addBoneParent('肩C.R', '腕.R')
+        bonesAlignmnet(rigifyName, 'ORG-eye.L', armName, '目.L')
+        bonesAlignmnet(rigifyName, 'ORG-eye.R', armName, '目.R')
         bpy.context.view_layer.objects.active = RIG_Name_Object
         if MMRA.shoulderLinkage:
             # 肩膀
@@ -585,6 +631,7 @@ class buildRigifyController(bpy.types.Operator):
         bpy.context.object.name = armName + '_' + rigifyName  # 改名称
         bpy.ops.object.select_all(action='DESELECT')
         for objectName in [RIG_Name, arm2Name, arm3Name]:  # 遍历物体名称列表，调用delete_object函数删除物体
+            continue
             deleteObject(objectName)
         if MMRA.bendBones:
             # 设置MMD骨骼
