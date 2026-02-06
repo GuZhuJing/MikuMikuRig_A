@@ -1,4 +1,4 @@
-schema_version = "1.0.1"
+schema_version = "5.0.1"
 
 # Blender 扩展的清单文件示例
 # 根据你的扩展来改变数值
