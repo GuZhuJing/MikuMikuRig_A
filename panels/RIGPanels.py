@@ -1,5 +1,4 @@
 import bpy
-
 from ..operators.RIG import buildRigifyController
 from ..common.i18n.i18n import i18n
 
@@ -24,7 +23,6 @@ class Rig_Opt(bpy.types.Panel):
                 layout.prop(MMRA, "enableInitialPose", text=i18n("自定义初始姿势"))
                 if MMRA.enableInitialPose:
                     layout.prop(MMRA, "initialPoseFilePath")
-
     @classmethod
     def poll(cls, context: bpy.types.Context):
         return context.active_object is not None
