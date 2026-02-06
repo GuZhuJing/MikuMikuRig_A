@@ -3,8 +3,7 @@ import bpy
 
 dir = os.path.dirname(os.path.dirname( __file__))  # 获取当前文件的父目录的父目录路径
 
-# 函数获取JSON文件路径列表
-def jsonFilesPathsList(directory):
+def jsonFilesPathsList(directory):  # 函数获取JSON文件路径列表
     jsonFilePathsNames = []  # 初始化一个空列表，用于存储JSON文件路径
     for root, dirs, files in os.walk(directory):  # 遍历目录树，root为当前目录，dirs为子目录列表，files为文件列表
         for file in files:  # 遍历当前目录中的所有文件
@@ -12,8 +11,7 @@ def jsonFilesPathsList(directory):
                 json_file_name = os.path.join(root, file)  # 将目录路径和文件名组合成完整的文件路径
                 jsonFilePathsNames.append(json_file_name)  # 将完整路径添加到列表中
     return jsonFilePathsNames  # 返回JSON文件路径列表
-# 函数获取JSON文件列表
-def jsonFilesList():
+def jsonFilesList():  # 函数获取JSON文件列表
     MMD_RIG_path = os.path.join(dir, 'resources', 'MMD_RIG')
     jsonFilePaths = jsonFilesPathsList(MMD_RIG_path)  # 获取指定目录下的所有JSON文件路径
     JSON_Name = []  # 初始化预设名称列表
@@ -23,33 +21,19 @@ def jsonFilesList():
         JSON_Name.append((jsonName, jsonName, jsonName))  # 将三元组(标识符, 显示名称, 描述)添加到列表中
     return JSON_Name  # 返回预设名称列表，用于Blender枚举属性
 
-# 类创建MMRA属性组
-class MMRA_property(bpy.types.PropertyGroup):
+class MMRA_property(bpy.types.PropertyGroup):  # 创建MMRA属性组
     bonePresets: bpy.props.EnumProperty(
-        name="bonePresets",
+        name="骨骼预设",
         items=jsonFilesList(),
         default='default',
         description="预设文件列表"
     )
-    initialPoseFilePath: bpy.props.StringProperty(
-        name="",
-        subtype='FILE_PATH',
-        description="初始动作路径"
-    )
-    # number: bpy.props.IntProperty(
-    #     name="Int Config",
-    #     default=2,
-    # )
-    boolean: bpy.props.BoolProperty(
-        name="Boolean Config",
-        default=False,
-    )
-    polarTarget: bpy.props.BoolProperty(
-        name="Polar target",
+    RIG_OPT_Extras: bpy.props.BoolProperty(
+        name="额外选项",
         default=False
     )
-    RIG_OPT_Extras: bpy.props.BoolProperty(
-        name="Extras Enabled",
+    polarTarget: bpy.props.BoolProperty(
+        name="极向目标",
         default=False
     )
     shoulderLinkage: bpy.props.BoolProperty(
@@ -57,37 +41,22 @@ class MMRA_property(bpy.types.PropertyGroup):
         default=False
     )
     enableInitialPose: bpy.props.BoolProperty(
-        name="Initial pose",
+        name="初始姿势",
         default=False,
-        description="是否启用初始姿态。"
+        description="初始姿态"
     )
-    # json_filepath: bpy.props.StringProperty(
-    #     name="",
-    #     subtype='FILE_PATH',
-    #     description="导入json字典预设"
-    # )
+    initialPoseFilePath: bpy.props.StringProperty(
+        name="初始姿态路径",
+        subtype='FILE_PATH',
+        description="初始姿态路径"
+    )
     importPresets: bpy.props.BoolProperty(
-        name="Import bonePresets",
+        name="导入骨骼预设",
         default=False,
         description="导入JSON字典预设"
     )
     bendBones: bpy.props.BoolProperty(
-        name="Bend the bones",
+        name="弯曲骨骼",
         default=True,
-        description="非MMD骨骼不要启用,请手动弯曲骨骼"
+        description="弯曲骨骼（非MMD骨骼不要启用）"
     )
-#     make_presets: bpy.props.BoolProperty(
-#         default=True,
-#     )
-#     number: bpy.props.IntProperty(
-#         default=0,
-#     )
-#     json_txt: bpy.props.StringProperty(
-#         name="",
-#         subtype='FILE_NAME',
-#     )
-#     designated: bpy.props.BoolProperty(
-#         default=True,
-#     )
-#     designated: bpy.props.BoolProperty(
-# )
