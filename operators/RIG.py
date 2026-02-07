@@ -631,7 +631,6 @@ class buildRigifyController(bpy.types.Operator):  # 构建MMD-Rigify控制器
         bpy.context.object.name = armName + '_' + rigifyName  # 改名称
         bpy.ops.object.select_all(action='DESELECT')
         for objectName in [RIG_Name, arm2Name, arm3Name]:  # 遍历物体名称列表，调用delete_object函数删除物体
-            continue
             deleteObject(objectName)
         if MMRA.bendBones:
             # 设置MMD骨骼
