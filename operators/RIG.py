@@ -490,6 +490,27 @@ class buildRigifyController(bpy.types.Operator):  # 构建MMD-Rigify控制器
             else:
                 print(f"[{printer}/{DEF_NAME}]骨骼 {armature_1_bone} 不存在。")
                 self.report({'WARNING'}, f"骨骼 {armature_1_bone} 不存在。")  
+        def addCopyRotation(MMDBone, rigifyNamebone):
+            modeInit('OBJECT')
+            modeInit('POSE', deselectMode='pose')
+            bpy.ops.object.select_pattern(pattern=armName)  # 选择物体
+            bpy.context.view_layer.objects.active = armObject  # 将该物体设置为活动对象
+            modeInit('OBJECT')
+            modeInit('POSE', deselectMode='pose')
+            bpy.context.active_object.pose.bones[MMDBone].select = True  # 将该骨骼设置为选中状态
+            bpy.context.active_object.data.bones.active = bpy.context.active_object.pose.bones[MMDBone].bone  # 将骨骼设置为活动骨骼
+            rotationConstraint_Name = '[MMRA] 复制旋转'
+            bpy.ops.pose.constraint_add(type='COPY_ROTATION')#  添加复制旋转约束 (COPY_ROTATION)
+            rotationConstraint = bpy.context.active_object.pose.bones[MMDBone].constraints[-1]
+            rotationConstraint.name = rotationConstraint_Name  # 重命名复制旋转约束
+            rotationConstraint.target = bpy.data.objects[rigifyName]  # 设置复制旋转约束目标为rigifyName_Object
+            rotationConstraint.subtarget = rigifyNamebone # 设置复制旋转约束目标子项为rigifyName
+            rotationConstraint.invert_x = False  # 设置复制旋转约束在X轴上不反转
+            rotationConstraint.invert_y = False
+            rotationConstraint.invert_z = False
+            rotationConstraint.mix_mode = 'ADD'  # 设置复制旋转约束混合模式为相加
+            rotationConstraint.target_space = 'POSE'  # 设置复制旋转约束目标空间为POSE
+            rotationConstraint.owner_space = 'POSE'  # 设置复制旋转约束所有者空间为POSE
         print(f"[{printer}]函数组加载完成！")
 
         # 作用应用初始动作并对齐骨骼
@@ -549,6 +570,12 @@ class buildRigifyController(bpy.types.Operator):  # 构建MMD-Rigify控制器
                 continue  # 跳过注释行
             if  key == '下半身':  # 针对骨骼“下半身“做特殊处理
                 addCopyLocationRotationScaleConstraint(key, rigifyName)
+                continue
+            if key == '足首D.R':
+                addCopyRotation(key, value)
+                continue
+            if key == '足首D.L':
+                addCopyRotation(key, value)
                 continue
             if isinstance(value, list):
                 for RIG_boneName in value:
@@ -635,10 +662,10 @@ class buildRigifyController(bpy.types.Operator):  # 构建MMD-Rigify控制器
             bpy.ops.object.select_pattern(pattern=armName)
             bpy.context.view_layer.objects.active = armObject  # 将该物体设置为活动对象
             # 禁用MMD骨骼的IK
-            bpy.context.object.pose.bones["足ＩＫ.L"].mmd_ik_toggle = False
-            bpy.context.object.pose.bones["足ＩＫ.R"].mmd_ik_toggle = False
-            bpy.context.object.pose.bones["つま先ＩＫ.R"].mmd_ik_toggle = False
-            bpy.context.object.pose.bones["つま先ＩＫ.L"].mmd_ik_toggle = False
+            # bpy.context.object.pose.bones["足ＩＫ.L"].mmd_ik_toggle = False
+            # bpy.context.object.pose.bones["足ＩＫ.R"].mmd_ik_toggle = False
+            # bpy.context.object.pose.bones["つま先ＩＫ.R"].mmd_ik_toggle = False
+            # bpy.context.object.pose.bones["つま先ＩＫ.L"].mmd_ik_toggle = False
         bpy.data.objects[armName].hide_set(True)  # 隐藏物体
         bpy.ops.object.select_all(action='DESELECT')
         print(f"[{printer}]Rigify控制器构造完成！")
