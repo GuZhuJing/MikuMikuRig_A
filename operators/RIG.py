@@ -594,8 +594,6 @@ class buildRigifyController(bpy.types.Operator):  # 构建MMD-Rigify控制器
         addBoneParent('hand_ik.R', 'torso_root')
         addBoneParent('hand_ik.L', 'torso_root')
         addBoneParent('torso_root', 'root')
-        addBoneParent('MCH-heel.02_rock2.L', 'torso_root')
-        addBoneParent('MCH-heel.02_rock2.R', 'torso_root')
         bpy.ops.object.mode_set(mode='POSE')  # 进入姿态模式
         bpy.context.active_pose_bone.custom_shape = bpy.data.objects["WGT-rig_root"]  # 为当前选中的姿态骨骼设置自定义控制器形状
         bpy.context.scene.tool_settings.transform_pivot_point = 'INDIVIDUAL_ORIGINS'  #将变换中心点设为独立原点，便于单独操作骨骼
