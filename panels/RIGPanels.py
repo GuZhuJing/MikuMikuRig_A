@@ -16,7 +16,6 @@ class Rig_Opt(bpy.types.Panel):
         layout.operator(buildRigifyController.bl_idname, text="构建控制器", icon="OUTLINER_DATA_ARMATURE")
         layout.prop(MMRA, "RIG_OPT_Extras", text=i18n("额外选项"), toggle=True, icon="PREFERENCES")
         if MMRA.RIG_OPT_Extras:
-            layout.prop(MMRA, "bendBones", text=i18n("弯曲骨骼"))
             layout.prop(MMRA, "polarTarget", text=i18n("极向目标"))
             layout.prop(MMRA, "shoulderLinkage", text=i18n("肩部联动"))
             if MMRA.bendBones:
