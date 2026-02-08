@@ -55,8 +55,3 @@ class MMRA_property(bpy.types.PropertyGroup):  # 创建MMRA属性组
         default=False,
         description="导入JSON字典预设"
     )
-    bendBones: bpy.props.BoolProperty(
-        name="弯曲骨骼",
-        default=True,
-        description="弯曲骨骼（非MMD骨骼不要启用）"
-    )
